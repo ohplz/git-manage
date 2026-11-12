@@ -162,6 +162,21 @@ describe('branch-panel', () => {
     expect(branchItem('main').querySelector('span[title="取消收藏"]')).toBeNull();
   });
 
+  it('分支名以 < 开头时应按文本渲染，不得注入元素（存储型 XSS 回归）', () => {
+    // git 允许引用名含 < > 和 /，形如 <img/src=x/onerror=alert(1)> 的分支可直接创建
+    const payload = '<img/src=x/onerror=alert(1)>';
+    setState(s => {
+      s.branches = [{ name: payload, isCurrent: false, isRemote: false }];
+    });
+    const panel = createPanel();
+    panel.expandAll();
+
+    const item = branchItem(payload);
+    expect(item).toBeTruthy();
+    expect(item.querySelector('img')).toBeNull();
+    expect(item.textContent).toContain(payload);
+  });
+
   it('点击分组标题应该展开/折叠分组（本地分组）', () => {
     setState(s => { s.branches = makeBranches(); });
     createPanel();

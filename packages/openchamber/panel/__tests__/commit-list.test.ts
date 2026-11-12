@@ -408,6 +408,34 @@ describe('commit-list', () => {
     expect(container.querySelectorAll('[data-hash]').length).toBe(0);
   });
 
+  it('提交标题以 < 开头时应按文本渲染，不得注入元素（存储型 XSS 回归）', () => {
+    // 仓库里的提交标题完全可能长成这样：打开不受信任的仓库即触发
+    const payload = '<img src=x onerror="window.__xss=1">';
+    const commits = makeCommits();
+    commits[0] = { ...commits[0], message: payload };
+    setupCommits(commits);
+    createPanel();
+
+    const msg = row('h1').querySelector('.gm-commit-msg') as HTMLElement;
+    expect(msg).toBeTruthy();
+    expect(msg.textContent).toBe(payload);
+    // 整行与整棵树里都不应出现被解析出来的 img 元素
+    expect(row('h1').querySelector('img')).toBeNull();
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('作者名以 < 开头时应按文本渲染，不得注入元素（存储型 XSS 回归）', () => {
+    const payload = '<img src=x onerror="window.__xss=1">';
+    const commits = makeCommits();
+    commits[1] = { ...commits[1], authorName: payload };
+    setupCommits(commits);
+    createPanel();
+
+    const author = row('h2').querySelector('.gm-commit-col-author') as HTMLElement;
+    expect(author.textContent).toBe(payload);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
   it('普通点击应该单选提交并触发 onCommitSelect', () => {
     const commits = setupCommits();
     const { onCommitSelect } = createPanel();

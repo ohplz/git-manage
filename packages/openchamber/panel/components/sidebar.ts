@@ -4,7 +4,7 @@
  * 图标顺序沿用原 main.ts createSidebar，首个按钮文案与箭头方向随 branchPanelHidden 动态切换
  */
 
-import { html } from '../html';
+import { html, raw } from '../html';
 import { getIcon } from '../icons';
 import { t } from '../i18n';
 import { getState, subscribeFields } from '../state';
@@ -128,7 +128,7 @@ export function createSidebar(
 
     const btn = html`
       <div data-sidebar="${item.key}" class="${BUTTON_CLASS}" title="${title}">
-        ${isToggle ? buildToggleIcon() : (item.customSvg ?? getIcon(item.icon))}
+        ${raw(isToggle ? buildToggleIcon() : (item.customSvg ?? getIcon(item.icon)))}
       </div>
     `;
 

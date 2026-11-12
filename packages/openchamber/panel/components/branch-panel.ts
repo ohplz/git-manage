@@ -4,7 +4,7 @@
  * 支持树状分组结构
  */
 
-import { html } from '../html';
+import { html, raw } from '../html';
 import { getState, setState, subscribeFields, Branch } from '../state';
 import { ServiceClient } from '../service';
 import { getIcon } from '../icons';
@@ -403,11 +403,11 @@ export function createBranchPanel(
         class="${itemClass}"
         data-branch="${branch.name}"
       >
-        <span class="gm-branch-item-icon">${getIcon('branchIcon')}</span>
-        ${isFavorite ? `<span class="gm-branch-item-star" title="${t('branch.unfavorite')}">${getIcon('favorite')}</span>` : ''}
+        <span class="gm-branch-item-icon">${raw(getIcon('branchIcon'))}</span>
+        ${raw(isFavorite ? `<span class="gm-branch-item-star" title="${t('branch.unfavorite')}">${getIcon('favorite')}</span>` : '')}
         <span class="${nameClass}">${branch.name}</span>
-        ${branch.hasUnpushed && branch.unpushedCount ? `<span class="gm-branch-badge-unpushed">↑${branch.unpushedCount}</span>` : ''}
-        ${branch.hasUnpulled && branch.unpulledCount ? `<span class="gm-branch-badge-unpulled">↓${branch.unpulledCount}</span>` : ''}
+        ${raw(branch.hasUnpushed && branch.unpushedCount ? `<span class="gm-branch-badge-unpushed">↑${branch.unpushedCount}</span>` : '')}
+        ${raw(branch.hasUnpulled && branch.unpulledCount ? `<span class="gm-branch-badge-unpulled">↓${branch.unpulledCount}</span>` : '')}
       </div>
     `;
   }

@@ -5,6 +5,11 @@
  * 使用示例:
  * const el = html`<div class="foo">${content}</div>`;
  * const el = html`<button onclick=${handler}>Click</button>`;
+ *
+ * 插值一律按文本转义后插入，只有 raw() 显式标记的片段才作为 HTML 原样插入。
+ * 不要把「字符串以 < 开头」当作可信依据：提交信息、分支名、文件路径等来自 git
+ * 的数据完全可以以 < 开头（如 `<img src=x onerror=...>`），
+ * 一旦原样插入 innerHTML 就是可执行的脚本。
  */
 
 type EventAttributes = {
@@ -16,6 +21,37 @@ type HtmlAttributes = Partial<Omit<HTMLElement, 'style' | 'children'>> & EventAt
   style?: string | Partial<CSSStyleDeclaration>;
   ref?: { current: HTMLElement | null };
 };
+
+/**
+ * 可信 HTML 标记
+ * 只有经 raw() 包装的片段才会被原样插入；模块外部无法伪造该 Symbol
+ */
+const TRUSTED_HTML: unique symbol = Symbol('gm.trusted-html');
+
+/** raw() 生成的可信 HTML 片段 */
+export interface TrustedHtml {
+  readonly [TRUSTED_HTML]: string;
+}
+
+/**
+ * 把扩展自身生成的 HTML 片段标记为可信（原样插入，不再转义）
+ * 只能用于常量或由常量拼出的静态结构（如内置 svg 图标、已自行转义的列片段）；
+ * 任何来自 git、用户输入或网络的数据都必须保持普通字符串。
+ * @param markup 扩展自身生成的 HTML 文本
+ * @returns 带可信标记的片段
+ */
+export function raw(markup: string): TrustedHtml {
+  return { [TRUSTED_HTML]: markup };
+}
+
+/**
+ * 判断插值是否为 raw() 生成的可信 HTML 片段
+ * @param value 模板插值
+ * @returns 是可信片段返回 true
+ */
+function isTrustedHtml(value: unknown): value is TrustedHtml {
+  return typeof value === 'object' && value !== null && TRUSTED_HTML in value;
+}
 
 /**
  * html 标签模板函数
@@ -33,14 +69,11 @@ export function html(
       const value = values[i];
       if (value == null || value === false) {
         // 忽略 null/undefined/false
+      } else if (isTrustedHtml(value)) {
+        // 仅 raw() 显式标记的片段原样插入（内置图标等），逐字来自仓库的文本永远走转义分支
+        parts.push(value[TRUSTED_HTML]);
       } else if (typeof value === 'string') {
-        // 仅以 < 开头的字符串视为原始 HTML（如 getIcon 返回的 <svg> 图标），
-        // 其余含尖括号的普通文本（如 `名字 <邮箱>`）一律转义，避免中段标签被吞
-        if (value.startsWith('<')) {
-          parts.push(value);
-        } else {
-          parts.push(escapeHTML(value));
-        }
+        parts.push(escapeHTML(value));
       } else if (typeof value === 'number') {
         parts.push(String(value));
       } else if (typeof value === 'boolean') {
@@ -51,8 +84,10 @@ export function html(
           if (item instanceof HTMLElement || item instanceof SVGElement) {
             arrElements.push(item);
             parts.push(`<!--m-${domElements.length}-${arrElements.length - 1}-->`);
+          } else if (isTrustedHtml(item)) {
+            parts.push(item[TRUSTED_HTML]);
           } else {
-            parts.push(String(item ?? ''));
+            parts.push(escapeHTML(String(item ?? '')));
           }
         }
         if (arrElements.length > 0) {

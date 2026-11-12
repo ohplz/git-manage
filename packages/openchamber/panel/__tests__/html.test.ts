@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { html, h, map, when, text } from '../html';
+import { html, h, map, when, raw, text } from '../html';
 
 describe('html', () => {
   describe('html 标签模板函数', () => {
@@ -190,15 +190,42 @@ describe('html', () => {
     });
 
     it('应转义 HTML 特殊字符并原样显示', () => {
-      // 以 < 开头的字符串视为原始 HTML，故用不以 < 开头的 'a<b' 覆盖 < 的转义
+      // 所有普通字符串一律转义，尖括号不会变成标签
       const element = html`<div>${'a & b'}${'a<b'}${'a > b'}${'say "hi"'}${"it's"}</div>`;
       expect(element.textContent).toBe('a & ba<ba > bsay "hi"it\'s');
     });
 
-    it('以 < 开头且包含尖括号的字符串应作为原始 HTML 注入', () => {
+    it('以 < 开头的普通字符串应按文本转义，不得注入元素', () => {
       const element = html`<div>${'<b>hi</b>'}</div>`;
-      expect(element.querySelector('b')).not.toBeNull();
-      expect(element.querySelector('b')?.textContent).toBe('hi');
+      expect(element.querySelector('b')).toBeNull();
+      expect(element.textContent).toBe('<b>hi</b>');
+    });
+
+    it('仓库数据形态的 <img onerror> 不得产生元素（存储型 XSS 回归）', () => {
+      // 提交信息 / 分支名 / 文件路径都可能长成这样，原样插入 innerHTML 就是可执行脚本
+      const payload = '<img src=x onerror="window.__xss=1">';
+      const element = html`<div>${payload}</div>`;
+      expect(element.querySelector('img')).toBeNull();
+      expect(element.textContent).toBe(payload);
+    });
+
+    it('只有 raw() 标记的片段才作为原始 HTML 注入', () => {
+      const trusted = html`<div>${raw('<b>hi</b>')}</div>`;
+      expect(trusted.querySelector('b')?.textContent).toBe('hi');
+
+      const escaped = html`<div>${'<b>hi</b>'}</div>`;
+      expect(escaped.querySelector('b')).toBeNull();
+    });
+
+    it('数组中形似标签的字符串同样要转义，raw() 片段则原样插入', () => {
+      const element = html`<div>${['<b>a</b>', '<img src=x onerror=alert(1)>']}</div>`;
+      expect(element.querySelector('b')).toBeNull();
+      expect(element.querySelector('img')).toBeNull();
+      expect(element.textContent).toBe('<b>a</b><img src=x onerror=alert(1)>');
+
+      const mixed = html`<div>${[raw('<b>b</b>'), 'c']}</div>`;
+      expect(mixed.querySelector('b')?.textContent).toBe('b');
+      expect(mixed.textContent).toBe('bc');
     });
 
     it('不以 < 开头但包含尖括号的文本应被转义而非当成 HTML', () => {

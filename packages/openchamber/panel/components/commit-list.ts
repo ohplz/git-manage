@@ -10,7 +10,7 @@
  * └─────────────────────────────────────────────────────────────┘
  */
 
-import { html } from '../html';
+import { html, raw } from '../html';
 import {
   getState,
   setState,
@@ -213,10 +213,10 @@ export function createCommitListPanel(
         <!-- 分隔线 -->
         <div class="gm-commit-toolbar-sep"></div>
         <!-- 右侧角：刷新 / Cherry-pick / 视图选项 / 搜索（自绘图标按钮） -->
-        <button data-action="btn-refresh" class="gm-commit-toolbar-btn" title="${t('sidebar.refresh')}">${getIcon('refresh')}</button>
-        <button data-action="btn-cherry-pick" class="gm-commit-toolbar-btn" title="${t('commit.cherryPick')}">${getIcon('cherryPick')}</button>
-        <button data-action="btn-settings" class="gm-commit-toolbar-btn" title="${t('settings.title')}">${getIcon('gearSettings')}</button>
-        <button data-action="btn-goto" class="gm-commit-toolbar-btn" title="${t('goto.title')}">${getIcon('search')}</button>
+        <button data-action="btn-refresh" class="gm-commit-toolbar-btn" title="${t('sidebar.refresh')}">${raw(getIcon('refresh'))}</button>
+        <button data-action="btn-cherry-pick" class="gm-commit-toolbar-btn" title="${t('commit.cherryPick')}">${raw(getIcon('cherryPick'))}</button>
+        <button data-action="btn-settings" class="gm-commit-toolbar-btn" title="${t('settings.title')}">${raw(getIcon('gearSettings'))}</button>
+        <button data-action="btn-goto" class="gm-commit-toolbar-btn" title="${t('goto.title')}">${raw(getIcon('search'))}</button>
       </div>
     `;
 
@@ -961,7 +961,7 @@ function createCommitItem(
         <svg width="10" height="10" viewBox="0 0 10 10"><circle class="gm-commit-dot-mark" cx="5" cy="5" r="4" fill="var(--gm-primary)"/></svg>
       </span>
       <!-- 哈希列 -->
-      ${hashCol}
+      ${raw(hashCol)}
       <!-- 引用在左：referencesOnLeft 开启时标签置于消息之前 -->
       ${settings.referencesOnLeft ? branchTags : ''}
       <!-- 提交消息 -->
@@ -969,9 +969,9 @@ function createCommitItem(
       <!-- 引用在右（默认） -->
       ${settings.referencesOnLeft ? '' : branchTags}
       <!-- 时间 -->
-      ${dateCol}
+      ${raw(dateCol)}
       <!-- 作者 -->
-      ${authorCol}
+      ${raw(authorCol)}
     </div>
   `;
 

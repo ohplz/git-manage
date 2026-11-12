@@ -16,7 +16,7 @@
  * └──────────────────────────────────┴───────────────────────│
  */
 
-import { html } from '../html';
+import { html, raw } from '../html';
 import { CommitInfo, FileDiff, Branch } from '../state';
 import { ServiceClient } from '../service';
 import { t, getLang } from '../i18n';
@@ -144,7 +144,7 @@ export function showCompareBranchesView(
       <div class="gm-compare-dialog">
         <!-- 标题栏 + 分支选择 -->
         <div class="gm-compare-toolbar">
-          <span class="gm-compare-icon">${getIcon('compareBranch')}</span>
+          <span class="gm-compare-icon">${raw(getIcon('compareBranch'))}</span>
           <button id="compare-left-btn" class="gm-compare-branch-btn"></button>
           <span class="gm-compare-with">${t('compare.with')}</span>
           <button id="compare-right-btn" class="gm-compare-branch-btn"></button>

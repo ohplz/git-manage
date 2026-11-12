@@ -189,6 +189,28 @@ describe('file-diff', () => {
       expect(second.textContent).toContain('+5');
     });
 
+    it('文件名以 < 开头时应按文本渲染，不得注入元素（存储型 XSS 回归）', () => {
+      // Linux 上文件名可以含空格与尖括号，形如 `<img src=x onerror=...>.txt` 的文件可被 git 跟踪
+      const payload = '<img src=x onerror=alert(1)>.txt';
+      const { container } = createPanel();
+
+      setState(s => {
+        s.diffs = [{ path: payload, additions: 1, deletions: 0, lines: [] }];
+      });
+
+      const list = getListContainer(container);
+      const item = list.querySelector('[data-path]') as HTMLElement;
+      expect(item).toBeTruthy();
+      expect(item.getAttribute('data-path')).toBe(payload);
+      expect(item.querySelector('img')).toBeNull();
+      expect(item.textContent).toContain(payload);
+
+      // 预览标题同样按文本渲染（点击文件后才会出现）
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(getPreviewContainer(container).querySelector('img')).toBeNull();
+      expect(getPreviewContainer(container).textContent).toContain(payload);
+    });
+
     it('diffs 清空后应该回到列表空态且标题计数归零', () => {
       const { container } = createPanel();
 
